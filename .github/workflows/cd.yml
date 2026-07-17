@@ -6,8 +6,24 @@ on:
       - master
 
 jobs:
+  test:
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v4
+        - uses: actions/setup-node@v4
+          with:
+            node-version: '20'
+            cache: 'npm'
+            cache-dependency-path: src/package-lock.json
+        - name: Install deps
+          working-directory: ./src
+          run: npm ci
+        - name: Run tests
+          working-directory: ./src
+          run: npm test
 
   build-and-push:
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
