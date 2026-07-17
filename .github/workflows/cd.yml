@@ -50,3 +50,5 @@ jobs:
             docker rm goldenowl-app || true
             docker run -d --name goldenowl-app -p 3000:3000 --restart unless-stopped \
               ${{ secrets.DOCKERHUB_USERNAME }}/goldenowl-app:latest
+            sleep 5
+            curl -sf localhost:3000 || (echo "Health check failed" && exit 1)
