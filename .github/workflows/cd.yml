@@ -45,10 +45,10 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            sleep 5
-            curl -sf localhost:3000 || (echo "Health check failed" && exit 1)
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/goldenowl-app:latest
             docker stop goldenowl-app || true
             docker rm goldenowl-app || true
             docker run -d --name goldenowl-app -p 3000:3000 --restart unless-stopped \
               ${{ secrets.DOCKERHUB_USERNAME }}/goldenowl-app:latest
+            sleep 5
+            curl -sf localhost:3000 || (echo "Health check failed" && exit 1)
