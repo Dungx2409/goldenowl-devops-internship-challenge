@@ -32,5 +32,10 @@ jobs:
 
       - name: Verify Docker build
         run: docker build -t goldenowl-app-ci-check ./src
+        with:
+          context: ./src
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
         
         
