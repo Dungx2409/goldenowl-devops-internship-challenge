@@ -2,7 +2,7 @@
 
 Giải pháp CI/CD tự động hóa cho ứng dụng Node.js: dockerize, build/push image lên DockerHub, và deploy tự động lên AWS EC2 bằng GitHub Actions.
 
-**🔗 Live demo:** http://54.252.146.95:3000/
+**🔗 Live demo:** http://15.135.233.162:3000/
 **📦 Docker image:** [dungx2409/goldenowl-app](https://hub.docker.com/r/dungx2409/goldenowl-app)
 
 ```bash
