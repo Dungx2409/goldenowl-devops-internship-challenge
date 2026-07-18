@@ -6,7 +6,7 @@ Giải pháp CI/CD tự động hóa cho ứng dụng Node.js: dockerize, build/
 **📦 Docker image:** [dungx2409/goldenowl-app](https://hub.docker.com/r/dungx2409/goldenowl-app)
 
 ```bash
-curl http://54.252.146.95:3000/
+curl http://15.135.233.162:3000/
 # {"message":"Welcome warriors to Golden Owl!"}
 ```
 
@@ -124,7 +124,7 @@ docker stop goldenowl-app && docker rm goldenowl-app
 ![DockerHub](./docs/dockerhub.png)
 
 ![Tag Commit ID](/docs/tag-commit.png)
-    e
+
  Tag latest và tag theo commit sha được push đúng thời điểm CD chạy.
 ### 6.4. Instance EC2 đang chạy container
 
