@@ -6,6 +6,21 @@ on:
       - master
 
 jobs:
+  test:
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v4
+        - uses: actions/setup-node@v4
+          with:
+            node-version: '20'
+            cache: 'npm'
+            cache-dependency-path: src/package-lock.json
+        - name: Install deps
+          working-directory: ./src
+          run: npm ci
+        - name: Run tests
+          working-directory: ./src
+          run: npm test
 
   build-and-push:
     needs: test
@@ -33,4 +48,23 @@ jobs:
             ${{ secrets.DOCKERHUB_USERNAME }}/goldenowl-app:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          
+
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/goldenowl-app:latest
+            docker stop goldenowl-app || true
+            docker rm goldenowl-app || true
+            docker run -d --name goldenowl-app -p 3000:3000 --restart unless-stopped \
+              ${{ secrets.DOCKERHUB_USERNAME }}/goldenowl-app:latest
+            sleep 5
+            curl -sf localhost:3000 || (echo "Health check failed" && exit 1)
