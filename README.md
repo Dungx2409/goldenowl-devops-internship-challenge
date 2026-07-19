@@ -120,7 +120,6 @@ Thay vì stop container cũ ngay rồi mới chạy container mới (có khoản
 - **Docker** được cài sẵn trên instance qua `apt install docker.io`, user `ubuntu` thuộc group `docker`.
 - Container chạy với `--restart unless-stopped` — tự khởi động lại nếu EC2 reboot.
 
-*(Nếu đã làm phần Load Balancer / Auto Scaling, thêm mục dưới đây — xóa nếu không làm)*
 
 ## 6. Bằng chứng CI/CD chạy thành công
 
