@@ -83,7 +83,22 @@ docker stop goldenowl-app && docker rm goldenowl-app
 |---|---|
 | `test` | Chạy lại test suite — lớp phòng thủ thứ 2, phòng trường hợp branch protection bị tắt/bypass |
 | `build-and-push` | Build Docker image từ `./src`, push lên DockerHub với 2 tag: `latest` (để deploy) và `<commit-sha>` (để rollback/audit) |
-| `deploy` | SSH vào EC2, `docker pull` image mới nhất, `stop` + `rm` container cũ, `run` container mới, `sleep 5` rồi `curl` health check — job fail nếu app không phản hồi |
+| `deploy` | SSH vào EC2, thực hiện deploy theo chiến lược **blue-green trên cùng 1 instance** kèm health check + rollback tự động |
+ 
+#### Chi tiết bước `deploy` (blue-green + rollback)
+ 
+Thay vì stop container cũ ngay rồi mới chạy container mới (có khoảng downtime và rủi ro nếu image mới lỗi), pipeline chạy song song 2 container tạm thời để verify trước khi "chuyển traffic":
+ 
+1. **Dọn image cũ** : `docker image prune -f --filter "until=24h"`, tránh đầy ổ đĩa EC2 sau nhiều lần deploy.
+2. **Pull image mới nhất** từ DockerHub (tag `latest`).
+3. **Chạy container mới ở cổng tạm** `goldenowl-app-new` trên port **3001** (không đụng vào container production đang chạy ở port 3000), container cũ vẫn tiếp tục phục vụ user trong lúc này.
+4. **Health check container mới** — retry `curl` tối đa 10 lần, mỗi lần cách nhau 3 giây, kiểm tra HTTP status `200`.
+   - Nếu **fail toàn bộ 10 lần**: dừng + xóa container mới, `exit 1` → job đỏ, **container production cũ ở port 3000 không bị động tới**, app vẫn chạy bình thường cho user. Đây là cơ chế rollback tự động.
+   - Nếu **pass**: chuyển sang bước 5.
+5. **Switch traffic** — chỉ khi container mới đã xác nhận khỏe mạnh mới `stop` + `rm` container production cũ, rồi `run` container mới đè lên đúng port 3000 (tên `goldenowl-app`, `--restart unless-stopped`).
+6. Dọn container tạm ở port 3001 (`goldenowl-app-new`), verify lần cuối bằng `curl` vào port 3000 chính thức.
+**Lợi ích so với bản deploy trực tiếp (stop → run):** nếu image mới có bug khiến app crash hoặc không khởi động được, pipeline tự phát hiện ở bước 4 và **không bao giờ đưa image lỗi vào production** — người dùng luôn thấy phiên bản chạy ổn định cuối cùng, kể cả khi lần deploy đó fail.
+ 
 
 ### 4.3. GitHub Secrets cần cấu hình
 
@@ -105,7 +120,6 @@ docker stop goldenowl-app && docker rm goldenowl-app
 - **Docker** được cài sẵn trên instance qua `apt install docker.io`, user `ubuntu` thuộc group `docker`.
 - Container chạy với `--restart unless-stopped` — tự khởi động lại nếu EC2 reboot.
 
-*(Nếu đã làm phần Load Balancer / Auto Scaling, thêm mục dưới đây — xóa nếu không làm)*
 
 ## 6. Bằng chứng CI/CD chạy thành công
 
